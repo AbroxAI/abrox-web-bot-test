@@ -40,13 +40,19 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
 @keyframes glowPulseSpin{0%,100%{filter:drop-shadow(0 0 10px #ff5fd2) drop-shadow(0 0 15px #8b5cf6);} 50%{filter:drop-shadow(0 0 25px #ff5fd2) drop-shadow(0 0 35px #8b5cf6);}}
 .processing-circle{width:96px;height:96px;position:relative;z-index:10;}
 .processing-circle div{width:100%;height:100%;border-radius:50%;border:6px solid transparent;border-top-color:#ff5fd2;border-bottom-color:#3b82f6;animation:spin 1s linear infinite,glowPulseSpin 2s infinite ease-in-out;}
+
+/* Modal Styles */
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:50; justify-content:center; items:center; }
+.modal-content { background:#0a1a2c; padding:1.5rem; border-radius:1.5rem; width:90%; max-width:400px; color:white; position:relative; }
+.modal-content .close { position:absolute; top:0.5rem; right:0.5rem; cursor:pointer; font-weight:bold; }
 </style>
 </head>
 <body class="flex justify-center items-center min-h-screen">
-<div class="w-[390px] h-[844px] rounded-3xl overflow-hidden relative space-bg text-white">
 
+<div class="w-[390px] h-[844px] rounded-3xl overflow-hidden relative space-bg text-white">
   <div id="stars"></div>
 
+  <!-- HEADER -->
   <div class="header">
     <div class="logo-container">
       <img id="abroxLogo" src="assets/logo.png" alt="ABROX Logo"/>
@@ -54,6 +60,7 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
     <div class="bg-cyan-600 px-3 py-1 rounded-lg text-sm font-medium">🇺🇸 en</div>
   </div>
 
+  <!-- CONTENT -->
   <div class="content-wrapper px-6 mt-6">
     <h1 class="text-2xl font-semibold tracking-tight">TRADING BOT</h1>
     <h2 class="text-lg mt-3 font-semibold tracking-tight">SETTINGS</h2>
@@ -91,6 +98,43 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
     </div>
   </div>
 
+  <!-- PREMIUM MODAL -->
+  <div id="paymentModal" class="modal flex">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('paymentModal')">×</span>
+      <p id="slotsRemaining" class="text-yellow-400 font-bold text-center mb-2 animate-pulse">⚡ Only 3 Premium Slots Left!</p>
+      <h2 class="text-xl font-semibold text-center mb-1">ABROX AI Premium</h2>
+      <p class="text-center text-sm opacity-80 mb-2">Unlock full AI signals & exclusive trading opportunities!</p>
+      <p class="text-center text-sm opacity-80 mb-4">50 USDT Subscription</p>
+      <div class="mt-2 bg-[#0f2a44] p-4 rounded-xl shadow-inner">
+        <p class="font-medium">Network</p>
+        <p class="text-green-400 font-semibold">USDT (TRC20)</p>
+      </div>
+      <div class="mt-3 bg-[#0f2a44] p-4 rounded-xl shadow-inner">
+        <p class="text-xs opacity-60">Wallet Address</p>
+        <p class="break-all text-sm mt-1 font-mono" id="walletAddress">TY23RUXeNaibpnTnvxxu18qiqtMpDws6yB</p>
+        <button onclick="copyWallet()" class="text-cyan-400 text-xs mt-2 hover:underline">Copy Address</button>
+      </div>
+      <p id="countdownTimer" class="text-red-400 text-center text-sm mt-3 font-bold text-lg">05:00</p>
+      <p class="text-xs text-red-400 mt-2">⚠️ Send ONLY USDT via TRC20. Another network = permanent loss.</p>
+      <button id="paidBtn" class="mt-5 w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-semibold text-white hover:scale-105 transition-transform shadow-lg">I Have Paid</button>
+      <span class="absolute top-3 right-3 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">PREMIUM</span>
+    </div>
+  </div>
+
+  <!-- PROCESSING MODAL -->
+  <div id="processingModal" class="modal flex">
+    <div class="modal-content text-center">
+      <p class="text-cyan-400 text-lg mb-2">⚡ Processing your payment<span id="dotAnim" class="dotAnim"></span></p>
+      <div class="processing-circle mb-4"><div></div></div>
+      <div id="paymentStatus"></div>
+      <div id="postPaymentActions" class="mt-2 flex gap-4 hidden">
+        <button id="retryBtn" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg text-white font-semibold hover:scale-105 transition-transform">Retry Payment</button>
+        <a href="https://t.me/official_profithunters" target="_blank" class="px-4 py-2 bg-cyan-500 rounded-lg text-white font-semibold hover:scale-105 transition-transform">Contact Support</a>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -111,26 +155,76 @@ let currency=null,timeframe=null;
 function toggleDropdown(id){ document.getElementById(id).classList.toggle("hidden"); }
 function selectCurrency(val){ currency=val; document.querySelectorAll('.dropdown-btn')[0].innerHTML=val+' <span class="text-sm">▾</span>'; document.getElementById('currencyList').classList.add("hidden"); highlightOption('currencyList',val); }
 function selectTime(val){ timeframe=val; document.querySelectorAll('.dropdown-btn')[1].innerHTML=val+' <span class="text-sm">▾</span>'; document.getElementById('timeList').classList.add("hidden"); highlightOption('timeList',val); }
-function startSignals(){ if(!currency||!timeframe){ document.getElementById("warn").classList.remove("hidden"); return; } alert("Start signals triggered!"); }
-
+function startSignals(){ 
+  if(!currency||!timeframe){ document.getElementById("warn").classList.remove("hidden"); return; } 
+  showModal('paymentModal'); 
+}
 document.addEventListener('click',e=>{
   if(!e.target.closest('.dropdown-btn')){
     document.getElementById('currencyList').classList.add('hidden');
     document.getElementById('timeList').classList.add('hidden');
   }
 });
-
-// Smooth scroll to selected option
 function highlightOption(listId,value){
   const list = document.getElementById(listId);
   const items = list.querySelectorAll('div');
-  items.forEach(i => i.classList.remove('active'));
-  const selected = Array.from(items).find(i => i.textContent===value);
-  if(selected){
-    selected.classList.add('active');
-    selected.scrollIntoView({behavior:'smooth', block:'center'});
-  }
+  items.forEach(i=>i.classList.remove('active'));
+  const selected = Array.from(items).find(i=>i.textContent===value);
+  if(selected){ selected.classList.add('active'); selected.scrollIntoView({behavior:'smooth', block:'center'}); }
 }
+
+// Modals
+function showModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+// Slots countdown
+let slots=3; const slotsEl=document.getElementById('slotsRemaining');
+const slotTimer = setInterval(()=>{
+  if(slots>0){ slots--; slotsEl.textContent=`⚡ Only ${slots} Premium Slots Left!`; }
+  else{ clearInterval(slotTimer); slotsEl.textContent="❌ No slots left"; }
+},5000);
+
+// Payment modal buttons
+function copyWallet(){ navigator.clipboard.writeText("TY23RUXeNaibpnTnvxxu18qiqtMpDws6yB").then(()=>alert("Copied!")).catch(()=>alert("Copy failed")); }
+
+document.getElementById("paidBtn").onclick = () => {
+  closeModal('paymentModal');
+  showModal('processingModal');
+  startDotAnimation();
+  const statusDiv=document.getElementById('paymentStatus');
+  const actionsDiv=document.getElementById('postPaymentActions');
+  statusDiv.innerHTML=''; actionsDiv.classList.add('hidden');
+
+  setTimeout(()=>{
+    stopDotAnimation();
+    statusDiv.innerHTML='<p class="text-red-400 font-bold text-lg mb-2">❌ Payment Not Detected</p><p class="text-white text-sm mb-2">Please resend via TRC20 or contact support:</p>';
+    actionsDiv.classList.remove('hidden');
+  },4000);
+};
+
+document.getElementById("retryBtn").onclick = ()=>{
+  closeModal('processingModal');
+  showModal('paymentModal');
+};
+
+// Dot animation
+let dotCount=0,dotInterval; const dotSpan=document.getElementById('dotAnim');
+function startDotAnimation(){ clearInterval(dotInterval); dotCount=0; dotInterval=setInterval(()=>{ dotCount=(dotCount+1)%4; dotSpan.textContent='.'.repeat(dotCount); },500);}
+function stopDotAnimation(){ clearInterval(dotInterval); dotSpan.textContent='';}
+
+// Countdown Timer
+let countdown=300; const countdownEl=document.getElementById('countdownTimer');
+function startCountdown(){
+  clearInterval(window.countdownInterval);
+  countdown=300;
+  window.countdownInterval=setInterval(()=>{
+    const mins=Math.floor(countdown/60),secs=countdown%60;
+    countdownEl.textContent=`${mins}:${secs<10?'0':''}${secs}`;
+    countdown--;
+    if(countdown<0){ clearInterval(window.countdownInterval); countdownEl.textContent="⏳ Offer Expired!"; }
+  },1000);
+}
+startCountdown();
 </script>
 </body>
 </html>
