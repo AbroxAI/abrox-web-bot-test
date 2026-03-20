@@ -8,8 +8,10 @@
 <style>
 body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,Helvetica,Arial,sans-serif; }
 .space-bg { position:relative; background:radial-gradient(circle at top,#0d4f8b 0%,#062a4d 35%,#020b16 75%); overflow:hidden; }
+#stars { position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; }
 .star { position:absolute; background:#fff; border-radius:50%; }
-.icon-box { width:14vw; height:14vw; max-width:64px; max-height:64px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:6vw; font-weight:700; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06),0 4px 10px rgba(0,0,0,0.4); }
+
+.icon-box { width:14vw; height:14vw; max-width:64px; max-height:64px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:6vw; font-weight:700; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 4px 10px rgba(0,0,0,0.4); }
 .icon-box.usd { background:linear-gradient(180deg,#134b7a,#0f365e); color:#7dd3fc; }
 .icon-box.btc { background:linear-gradient(180deg,#0b233e,#091d33); color:#fff; }
 
@@ -26,14 +28,13 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
 
 @keyframes logoGlowPulse { 0%{filter:drop-shadow(0 0 5px #ff5fd2) drop-shadow(0 0 10px #8b5cf6);} 50%{filter:drop-shadow(0 0 15px #ff5fd2) drop-shadow(0 0 25px #8b5cf6);} 100%{filter:drop-shadow(0 0 5px #ff5fd2) drop-shadow(0 0 10px #8b5cf6);} }
 
-.header { display:flex; align-items:center; justify-content:space-between; min-height:120px; max-height:160px; padding:0 1rem; position:relative; z-index:10; }
-.logo-container { display:flex; align-items:center; justify-content:center; overflow:visible; flex:1; }
-.logo-container img { max-height:80%; width:auto; object-fit:contain; display:block; animation:logoGlowPulse 2s infinite ease-in-out; transition: transform 0.3s ease; }
-.logo-container img:hover { transform:scale(1.05); }
-
+.header { display:flex; align-items:center; justify-content:space-between; min-height:120px; padding:0 1rem; position:relative; z-index:10; }
+.logo-container { display:flex; align-items:center; justify-content:center; overflow:visible; }
+.logo-container img { max-height:100%; max-width:50vw; height:auto; width:auto; display:block; animation:logoGlowPulse 2s infinite ease-in-out; transition: transform 0.3s ease; }
+.logo-container:hover img { transform:scale(1.05); }
 .content-wrapper { position:relative; z-index:10; }
 
-@media(max-width:420px){ .w-[390px]{width:95vw;} .h-[844px]{height:95vh;} #startBtn{padding:3vw;font-size:4vw;} .dropdown-btn{padding:2.5vw 3vw;font-size:3.5vw;} .header { min-height:100px; max-height:140px; } .logo-container img { max-height:70%; } }
+@media(max-width:420px){ .w-[390px]{width:95vw;} .h-[844px]{height:95vh;} #startBtn{padding:3vw;font-size:4vw;} .dropdown-btn{padding:2.5vw 3vw;font-size:3.5vw;} }
 
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 @keyframes glowPulseSpin{0%,100%{filter:drop-shadow(0 0 10px #ff5fd2) drop-shadow(0 0 15px #8b5cf6);} 50%{filter:drop-shadow(0 0 25px #ff5fd2) drop-shadow(0 0 35px #8b5cf6);}}
@@ -78,7 +79,6 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
           <div onclick="selectCurrency('AUD/USD')">AUD/USD</div>
         </div>
       </div>
-
       <div class="relative">
         <div class="dropdown-btn" onclick="toggleDropdown('timeList')">Timeframe <span class="text-sm">▾</span></div>
         <div id="timeList" class="dropdown-list hidden">
@@ -89,7 +89,6 @@ body { margin:0; background:#000; font-family:-apple-system,BlinkMacSystemFont,"
           <div onclick="selectTime('1 Hour')">1 Hour</div>
         </div>
       </div>
-
       <button id="startBtn" onclick="startSignals()">Start Signals</button>
       <p id="warn" class="text-red-400 text-xs text-center hidden mt-2">Please select currency and timeframe</p>
     </div>
@@ -137,7 +136,7 @@ const starsContainer=document.getElementById("stars");
 for(let i=0;i<40;i++){
   const s=document.createElement("div");
   s.className="star";
-  s.style.top=Math.random()*100+"%";
+  s.style.top=(15+Math.random()*85)+"%";
   s.style.left=Math.random()*100+"%";
   s.style.width=s.style.height=(Math.random()*2+1)+"px";
   s.style.opacity=Math.random()*0.7+0.3;
@@ -145,38 +144,59 @@ for(let i=0;i<40;i++){
 }
 
 // Dropdowns
-let currency=null, timeframe=null;
+let currency=null,timeframe=null;
 function toggleDropdown(id){ document.getElementById(id).classList.toggle("hidden"); }
-function selectCurrency(val){ currency=val; document.querySelectorAll('.dropdown-btn')[0].innerHTML = val+' <span class="text-sm">▾</span>'; document.getElementById('currencyList').classList.add("hidden"); }
-function selectTime(val){ timeframe=val; document.querySelectorAll('.dropdown-btn')[1].innerHTML = val+' <span class="text-sm">▾</span>'; document.getElementById('timeList').classList.add("hidden"); }
-function startSignals(){ if(!currency||!timeframe){ document.getElementById("warn").classList.remove("hidden"); return; } showPaymentModal(); }
-document.addEventListener('click', e=>{
+function selectCurrency(val){ currency=val; document.querySelectorAll('.dropdown-btn')[0].innerHTML = val+' <span class="text-sm">▾</span>'; document.getElementById('currencyList').classList.add("hidden"); highlightOption('currencyList',val); }
+function selectTime(val){ timeframe=val; document.querySelectorAll('.dropdown-btn')[1].innerHTML = val+' <span class="text-sm">▾</span>'; document.getElementById('timeList').classList.add("hidden"); highlightOption('timeList',val); }
+function startSignals(){ 
+  if(!currency||!timeframe){ document.getElementById("warn").classList.remove("hidden"); return; } 
+  showPaymentModal(); 
+}
+
+document.addEventListener('click',e=>{
   if(!e.target.closest('.dropdown-btn')){
     document.getElementById('currencyList').classList.add('hidden');
     document.getElementById('timeList').classList.add('hidden');
   }
 });
 
-// Premium modal
+function highlightOption(listId,value){
+  const list = document.getElementById(listId);
+  const items = list.querySelectorAll('div');
+  items.forEach(i => i.classList.remove('active'));
+  const selected = Array.from(items).find(i => i.textContent===value);
+  if(selected){
+    selected.classList.add('active');
+    selected.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+// Premium modal logic
 let remainingSlots=7, countdown=300;
 const slotCounter=document.getElementById('slotCounter');
 const countdownTimer=document.getElementById('countdownTimer');
-function showPaymentModal(){ const modal=document.getElementById("paymentModal"); modal.classList.remove("hidden"); startCountdown(); }
-function startCountdown(){ clearInterval(window.countdownInterval); countdown=300;
-window.countdownInterval=setInterval(()=>{
-  const mins=Math.floor(countdown/60), secs=countdown%60;
-  countdownTimer.textContent=`${mins}:${secs<10?'0':''}${secs}`;
-  countdown--;
-  if(countdown<0){ clearInterval(window.countdownInterval); countdownTimer.textContent="⏳ Offer Expired!"; }
-},1000);}
+function showPaymentModal(){ 
+  const modal=document.getElementById("paymentModal"); 
+  modal.classList.remove("hidden"); 
+  startCountdown(); 
+}
+function startCountdown(){ 
+  clearInterval(window.countdownInterval); 
+  countdown=300;
+  window.countdownInterval=setInterval(()=>{
+    const mins=Math.floor(countdown/60), secs=countdown%60;
+    countdownTimer.textContent=`${mins}:${secs<10?'0':''}${secs}`;
+    countdown--;
+    if(countdown<0){ clearInterval(window.countdownInterval); countdownTimer.textContent="⏳ Offer Expired!"; }
+  },1000);
+}
 function copyWallet(){ navigator.clipboard.writeText("TY23RUXeNaibpnTnvxxu18qiqtMpDws6yB").then(()=>alert("Wallet address copied")).catch(()=>alert("Copy failed")); }
 
-// Processing Dots Animation
+// Processing Dots
 const dotSpan = document.getElementById('dotAnim');
-let dotCount = 0;
-let dotInterval;
-function startDotAnimation() { clearInterval(dotInterval); dotCount = 0; dotInterval = setInterval(() => { dotCount = (dotCount + 1) % 4; dotSpan.textContent = '.'.repeat(dotCount); }, 500); }
-function stopDotAnimation() { clearInterval(dotInterval); dotSpan.textContent = ''; }
+let dotCount = 0, dotInterval;
+function startDotAnimation(){ clearInterval(dotInterval); dotCount=0; dotInterval=setInterval(()=>{ dotCount=(dotCount+1)%4; dotSpan.textContent='.'.repeat(dotCount); },500); }
+function stopDotAnimation(){ clearInterval(dotInterval); dotSpan.textContent=''; }
 
 // Paid button
 document.getElementById("paidBtn").onclick = () => {
@@ -189,17 +209,17 @@ document.getElementById("paidBtn").onclick = () => {
   statusDiv.innerHTML = '';
   actionsDiv.classList.add('hidden');
 
-  setTimeout(() => {
+  setTimeout(()=>{
     stopDotAnimation();
-    statusDiv.innerHTML = `
+    statusDiv.innerHTML=`
       <p class="text-red-400 font-bold text-lg mb-2">❌ Payment Not Detected</p>
       <p class="text-white text-sm mb-2">Please resend via TRC20 or contact support:</p>
     `;
     actionsDiv.classList.remove('hidden');
-  }, 4000);
+  },4000);
 };
 
-// Retry Payment Button
+// Retry Payment
 document.getElementById("retryBtn").onclick = () => {
   document.getElementById("processingModal").classList.add("hidden");
   document.getElementById("paymentModal").classList.remove("hidden");
